@@ -1,0 +1,56 @@
+import { VercelRequest, VercelResponse } from '@vercel/node';
+
+const API_URL = 'https://api.guerrillamail.com/ajax.php';
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { sid_token, offset = '0' } = req.query;
+
+    if (!sid_token || typeof sid_token !== 'string') {
+      return res.status(400).json({ error: 'sid_token is required' });
+    }
+
+    const offsetNum = typeof offset === 'string' ? parseInt(offset, 10) : 0;
+
+    if (isNaN(offsetNum) || offsetNum < 0) {
+      return res.status(400).json({ error: 'Invalid offset value' });
+    }
+
+    const params = new URLSearchParams({
+      f: 'get_email_list',
+      sid_token,
+      offset: offsetNum.toString(),
+    });
+
+    const response = await fetch(`${API_URL}?${params.toString()}`);
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Guerrilla Mail API error' });
+    }
+
+    const data = await response.json();
+
+    return res.status(200).json({
+      success: true,
+      emails: (data.list || []).map((email: any) => ({
+        id: email.mail_id,
+        from: email.mail_from,
+        subject: email.mail_subject,
+        excerpt: email.mail_excerpt,
+        timestamp: email.mail_timestamp,
+        read: email.mail_read,
+        date: email.mail_date,
+      })),
+      total_count: parseInt(data.count || '0', 10),
+      current_offset: offsetNum,
+      sid_token: data.sid_token || sid_token,
+    });
+  } catch (error) {
+    console.error('Error fetching email list:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
