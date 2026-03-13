@@ -1,15 +1,12 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useGuerrillaMail } from '@/hooks/useGuerrillaMail';
 import { AppHeader } from '@/components/AppHeader';
 import { EmailHeader } from '@/components/EmailHeader';
 import { InboxList } from '@/components/InboxList';
 import { EmailViewer } from '@/components/EmailViewer';
-import { Loader2, ShieldCheck, RefreshCw, Zap, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2, ShieldCheck, RefreshCw, Zap } from 'lucide-react';
 
 const Index = () => {
-  const navigate = useNavigate();
   const {
     session,
     emails,
@@ -48,21 +45,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <AppHeader />
-      
-      {/* Top Navigation Bar */}
-      <div className="border-b border-border/50 bg-secondary/20 sticky top-0 z-40">
-        <div className="container max-w-5xl px-4 sm:px-6 py-3">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/api-directory')}
-            className="gap-2 text-sm"
-          >
-            <BookOpen className="w-4 h-4" />
-            API Directory
-          </Button>
-        </div>
-      </div>
 
       <main className="flex-1 container max-w-5xl px-4 sm:px-6 py-4 sm:py-6 space-y-4">
         <EmailHeader
