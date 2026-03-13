@@ -2,6 +2,18 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 const API_URL = 'https://api.guerrillamail.com/ajax.php';
 
+export const DOMAINS = [
+  'guerrillamail.com',
+  'guerrillamailblock.com',
+  'guerrillamail.net',
+  'guerrillamail.org',
+  'guerrillamail.de',
+  'grr.la',
+  'sharklasers.com',
+  'guerrillamail.info',
+  'spam4.me',
+] as const;
+
 export interface Email {
   mail_id: string;
   mail_from: string;
@@ -40,12 +52,13 @@ export function useGuerrillaMail() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [emailCount, setEmailCount] = useState(0);
+  const [selectedDomain, setSelectedDomain] = useState<string>(DOMAINS[0]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiCall('get_email_address', { lang: 'en' });
+      const data = await apiCall('get_email_address', { lang: 'en', site: selectedDomain });
       const newSession: SessionState = {
         emailAddr: data.email_addr,
         sidToken: data.sid_token,
@@ -54,7 +67,6 @@ export function useGuerrillaMail() {
       };
       setSession(newSession);
 
-      // Fetch initial email list
       const listData = await apiCall('get_email_list', {
         sid_token: data.sid_token,
         offset: '0',
@@ -69,7 +81,7 @@ export function useGuerrillaMail() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedDomain]);
 
   const checkEmail = useCallback(async () => {
     if (!session) return;
@@ -107,7 +119,6 @@ export function useGuerrillaMail() {
         email_id: emailId,
       });
       setSelectedEmail(data);
-      // Mark as read in local state
       setEmails(prev =>
         prev.map(e => e.mail_id === emailId ? { ...e, mail_read: '1' } : e)
       );
@@ -127,6 +138,7 @@ export function useGuerrillaMail() {
         email_user: username,
         lang: 'en',
         sid_token: session.sidToken,
+        site: selectedDomain,
       });
       setSession(prev => prev ? {
         ...prev,
@@ -138,7 +150,6 @@ export function useGuerrillaMail() {
       setEmails([]);
       setSelectedEmail(null);
 
-      // Fetch emails for new address
       const listData = await apiCall('get_email_list', {
         sid_token: data.sid_token,
         offset: '0',
@@ -150,7 +161,7 @@ export function useGuerrillaMail() {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session, selectedDomain]);
 
   const deleteEmails = useCallback(async (emailIds: string[]) => {
     if (!session) return;
@@ -182,7 +193,44 @@ export function useGuerrillaMail() {
     }
   }, [session, initSession]);
 
-  // Auto-check emails every 10 seconds
+  const changeDomain = useCallback(async (domain: string) => {
+    setSelectedDomain(domain);
+    if (session) {
+      // Extract username from current email
+      const atIndex = session.emailAddr.indexOf('@');
+      const username = atIndex > -1 ? session.emailAddr.substring(0, atIndex) : session.emailAddr;
+      setLoading(true);
+      try {
+        const data = await apiCall('set_email_user', {
+          email_user: username,
+          lang: 'en',
+          sid_token: session.sidToken,
+          site: domain,
+        });
+        setSession(prev => prev ? {
+          ...prev,
+          emailAddr: data.email_addr,
+          sidToken: data.sid_token,
+          emailTimestamp: data.email_timestamp,
+          alias: data.alias || '',
+        } : prev);
+        setEmails([]);
+        setSelectedEmail(null);
+
+        const listData = await apiCall('get_email_list', {
+          sid_token: data.sid_token,
+          offset: '0',
+        });
+        setEmails(listData.list || []);
+        setEmailCount(parseInt(listData.count || '0', 10));
+      } catch (err) {
+        console.error('Change domain failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [session]);
+
   useEffect(() => {
     if (!session) return;
     intervalRef.current = setInterval(checkEmail, 10000);
@@ -198,6 +246,7 @@ export function useGuerrillaMail() {
     loading,
     checking,
     emailCount,
+    selectedDomain,
     initSession,
     checkEmail,
     fetchEmail,
@@ -205,5 +254,6 @@ export function useGuerrillaMail() {
     deleteEmails,
     forgetMe,
     setSelectedEmail,
+    changeDomain,
   };
 }
