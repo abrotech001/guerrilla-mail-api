@@ -10,7 +10,7 @@ export function AppHeader() {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight leading-tight">
-              <span className="gradient-text">datempmail</span>
+              <span className="gradient-text">DATEMAIL</span>
             </h1>
             <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] leading-none mt-0.5">
               Disposable Email Service
