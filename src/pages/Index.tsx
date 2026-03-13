@@ -93,7 +93,7 @@ const Index = () => {
         </div>
 
         <footer className="text-center pb-6 pt-2 text-xs text-muted-foreground/60">
-          <p>datempmail — Powered by Guerrilla Mail API</p>
+          <p>DATEMPMAIL — built by Abraham Temitope</p>
         </footer>
       </main>
     </div>
