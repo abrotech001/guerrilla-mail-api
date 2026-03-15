@@ -74,8 +74,8 @@ export function EmailHeader({
         onClick={handleCopy}
         className="flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 py-3 sm:px-4 sm:py-3.5 cursor-pointer hover:border-primary/40 transition-colors group"
       >
-        <span className="font-mono text-sm sm:text-lg text-foreground truncate flex-1 select-all">
-          {usernameDisplay} <span className="text-muted-foreground font-sans px-1">+</span> @{selectedDomain}
+      <span className="font-mono text-sm sm:text-lg text-foreground truncate flex-1 select-all">
+          {usernameDisplay}@{selectedDomain}
         </span>
         <span className="shrink-0 p-1.5 rounded-md text-muted-foreground group-hover:text-primary transition-colors">
           {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
